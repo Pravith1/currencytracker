@@ -11,6 +11,10 @@ connectDB();
 // middleware
 app.use(express.json());
 
+// routes
+const scoreRoutes = require('./controller/scoreController');
+app.use('/api/score', scoreRoutes);
+
 // demo route
 app.get('/', (req, res) => {
 	res.send('welcome to cyberoscope');
