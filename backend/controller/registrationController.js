@@ -5,38 +5,54 @@ const Team = require('../models/Team');
 // POST /api/registrations
 router.post('/', async (req, res) => {
   try {
-    let { rollNo } = req.body || {};
-    if (!rollNo) return res.status(400).json({ error: 'rollNo is required' });
+    const { rollNo } = req.body;
 
-    // Normalize input to array and convert to lowercase
-    const rollArr = Array.isArray(rollNo) ? rollNo : [rollNo];
-    const normalized = rollArr.map(r => String(r).trim().toLowerCase()).filter(Boolean);
-    if (normalized.length === 0)
-      return res.status(400).json({ error: 'no valid rollNo provided' });
-
-    const added = [];
-    const existed = [];
-
-    for (const rn of normalized) {
-  try {
-    const result = await Team.updateOne(
-      { members: rn },                  // filter: find any team with this member
-      { $setOnInsert: { members: [rn], score: 0 } }, // insert if not exists
-      { upsert: true }
-    );
-
-    if (result.upsertedCount || result.upserted) {
-      added.push({ rollNo: rn, teamId: result.upsertedId?._id || null });
-    } else {
-      const existing = await Team.findOne({ members: rn });
-      existed.push({ rollNo: rn, teamId: existing._id });
+    // Validate input
+    if (!rollNo || !Array.isArray(rollNo) || rollNo.length === 0) {
+      return res.status(400).json({ error: 'rollNo array is required' });
     }
 
-  } catch (err) {
-    console.error('Error adding rollNo', rn, err);
-  }
-}
-    return res.status(200).json({ added, existed });
+    // Normalize roll numbers
+    const teamMembers = rollNo
+      .map(r => String(r).trim().toUpperCase()) // normalize
+      .filter(Boolean);
+
+    if (teamMembers.length === 0) {
+      return res.status(400).json({ error: 'No valid roll numbers provided' });
+    }
+
+    // Compute a unique key for the team (sorted members concatenated)
+    const membersKey = teamMembers.sort().join('_');
+
+    // Check if a team with any of these members already exists
+    const existing = await Team.findOne({
+      $or: [
+        { membersKey }, // exact same team
+        { members: { $in: teamMembers } } // any member already in another team
+      ]
+    });
+
+    if (existing) {
+      return res.status(200).json({
+        added: [],
+        existed: teamMembers
+      });
+    }
+
+    // Create new team
+    const newTeam = new Team({
+      members: teamMembers,
+      membersKey,
+      score: 0
+    });
+
+    await newTeam.save();
+
+    return res.status(200).json({
+      added: [{ members: teamMembers, teamId: newTeam._id }],
+      existed: []
+    });
+
   } catch (err) {
     console.error('Registration error', err);
     return res.status(500).json({ error: 'server error' });
