@@ -8,8 +8,6 @@ async function seed() {
   try {
     await mongoose.connect(process.env.MONGODB_URI);
     console.log('Connected to MongoDB for seeding');
-
-  await Team.deleteMany({});
   const created = await Team.insertMany(teams);
   console.log(`Inserted ${created.length} teams`);
     process.exit(0);
