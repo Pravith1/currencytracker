@@ -14,7 +14,7 @@ app.get('/api', (req, res) => {
 // middleware
 // allow only the dev frontends on localhost:5173 and localhost:5174
 app.use(cors({
-	origin: ['http://localhost:5173', 'http://localhost:5174']
+	origin: ['http://localhost:5173', 'http://localhost:5174','https://admin-currency.vercel.app/']
 }));
 app.use(express.json());
 
