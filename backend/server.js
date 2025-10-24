@@ -8,9 +8,14 @@ const cors = require('cors');
 const app = express();
 // connect to database
 connectDB();
-
+app.get('/api', (req, res) => {
+	res.send('welcome to cyberoscope');
+});
 // middleware
-app.use(cors());
+// allow only the dev frontends on localhost:5173 and localhost:5174
+app.use(cors({
+	origin: ['http://localhost:5173', 'http://localhost:5174']
+}));
 app.use(express.json());
 
 // routes
@@ -20,9 +25,7 @@ const registrationRoutes = require('./controller/registrationController');
 app.use('/api/registrations', registrationRoutes);
 
 // demo route
-app.get('/', (req, res) => {
-	res.send('welcome to cyberoscope');
-});
+
 
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
