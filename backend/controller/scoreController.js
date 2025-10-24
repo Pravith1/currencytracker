@@ -61,7 +61,7 @@ router.put('/score_subtract', async (req, res) => {
     if (!team) return res.status(404).json({ error: 'rollNo not found in any team' });
 
     team.score -= Math.abs(change);
-    await team.save();
+    await team.save();  
   return res.json({ teamId: team._id, score: team.score });
   } catch (err) {
     res.status(500).json({ error: 'server error' });
