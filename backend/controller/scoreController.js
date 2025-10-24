@@ -59,4 +59,15 @@ router.put('/score_subtract', async (req, res) => {
   }
 });
 
+// GET /teams - fetch all teams with their members and scores
+router.get('/teams', async (req, res) => {
+  try {
+    const teams = await Team.find({}).select('members score').lean();
+    return res.json({ teams, count: teams.length });
+  } catch (err) {
+    console.error('Error fetching teams:', err);
+    res.status(500).json({ error: 'server error' });
+  }
+});
+
 module.exports = router;
