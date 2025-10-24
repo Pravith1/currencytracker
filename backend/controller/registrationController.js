@@ -18,29 +18,24 @@ router.post('/', async (req, res) => {
     const existed = [];
 
     for (const rn of normalized) {
-      // Check if this rollNo already exists in any team
-      const team = await Team.findOne({ members: rn });
-      if (team) {
-        existed.push({ rollNo: rn, teamId: team._id });
-        continue;
-      }
+  try {
+    const result = await Team.updateOne(
+      { members: rn },                  // filter: find any team with this member
+      { $setOnInsert: { members: [rn], score: 0 } }, // insert if not exists
+      { upsert: true }
+    );
 
-      // Create single-member team
-      try {
-        const newTeam = new Team({ members: [rn], score: 0 });
-        await newTeam.save();
-        added.push({ rollNo: rn, teamId: newTeam._id });
-      } catch (err) {
-        // Handle duplicate insert race condition
-        if (err.code === 11000) {
-          const existing = await Team.findOne({ members: rn });
-          if (existing) existed.push({ rollNo: rn, teamId: existing._id });
-        } else {
-          console.error('Error saving team for', rn, err);
-        }
-      }
+    if (result.upsertedCount || result.upserted) {
+      added.push({ rollNo: rn, teamId: result.upsertedId?._id || null });
+    } else {
+      const existing = await Team.findOne({ members: rn });
+      existed.push({ rollNo: rn, teamId: existing._id });
     }
 
+  } catch (err) {
+    console.error('Error adding rollNo', rn, err);
+  }
+}
     return res.status(200).json({ added, existed });
   } catch (err) {
     console.error('Registration error', err);
