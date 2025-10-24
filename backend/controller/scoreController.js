@@ -8,8 +8,11 @@ router.get('/score_display', async (req, res) => {
     const rollNo = req.query.rollNo;
     if (!rollNo) return res.status(400).json({ error: "query param 'rollNo' required" });
 
+    // Convert to lowercase for case-insensitive search
+    const normalizedRollNo = String(rollNo).trim().toLowerCase();
+
     // Check if rollNo belongs to a team
-    const team = await Team.findOne({ members: rollNo });
+    const team = await Team.findOne({ members: normalizedRollNo });
     if (team) {
       return res.json({ teamId: team._id, score: team.score, members: team.members });
     }
@@ -28,8 +31,11 @@ router.put('/score_add', async (req, res) => {
     const change = parseInt(req.body.change, 10);
     if (!rollNo || Number.isNaN(change)) return res.status(400).json({ error: 'invalid payload' });
 
+    // Convert to lowercase for case-insensitive search
+    const normalizedRollNo = String(rollNo).trim().toLowerCase();
+
     // If rollNo belongs to a team, update team score
-    const team = await Team.findOne({ members: rollNo });
+    const team = await Team.findOne({ members: normalizedRollNo });
     if (!team) return res.status(404).json({ error: 'rollNo not found in any team' });
 
     team.score += change;

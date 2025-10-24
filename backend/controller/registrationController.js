@@ -8,9 +8,9 @@ router.post('/', async (req, res) => {
     let { rollNo } = req.body || {};
     if (!rollNo) return res.status(400).json({ error: 'rollNo is required' });
 
-    // Normalize input to array
+    // Normalize input to array and convert to lowercase
     const rollArr = Array.isArray(rollNo) ? rollNo : [rollNo];
-    const normalized = rollArr.map(r => String(r).trim()).filter(Boolean);
+    const normalized = rollArr.map(r => String(r).trim().toLowerCase()).filter(Boolean);
     if (normalized.length === 0)
       return res.status(400).json({ error: 'no valid rollNo provided' });
 
