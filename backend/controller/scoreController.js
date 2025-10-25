@@ -2,6 +2,8 @@ const express = require('express');
 const router = express.Router();
 const Team = require('../models/Team');
 
+const MAX_SCORE = 240; // Maximum score limit
+
 // GET /score_display?rollNo=123
 router.get('/score_display', async (req, res) => {
   try {
@@ -27,7 +29,7 @@ router.get('/score_display', async (req, res) => {
 });
 
 // PUT /score_add
-// body: { "roll.no": "123", "change": 5 }
+// body: { "rollNo": "123", "change": 5 }
 router.put('/score_add', async (req, res) => {
   try {
   const rollNo = req.body.rollNo;
@@ -44,7 +46,18 @@ router.put('/score_add', async (req, res) => {
   const team = await Team.findOne({ members: normalizedRollNo });
     if (!team) return res.status(404).json({ error: 'rollNo not found in any team' });
 
-    team.score += change;
+    const newScore = team.score + change;
+    
+    // Enforce maximum score limit
+    if (newScore > MAX_SCORE) {
+      return res.status(400).json({ 
+        error: `Score cannot exceed ${MAX_SCORE}`,
+        currentScore: team.score,
+        maxScore: MAX_SCORE 
+      });
+    }
+
+    team.score = newScore;
     await team.save();
   return res.json({ teamId: team._id, score: team.score });
   } catch (err) {
@@ -70,6 +83,7 @@ router.put('/score_subtract', async (req, res) => {
     if (!team) return res.status(404).json({ error: 'rollNo not found in any team' });
 
     team.score -= Math.abs(change);
+    // Score can go below 0 if needed, or add: team.score = Math.max(0, team.score);
     await team.save();  
   return res.json({ teamId: team._id, score: team.score });
   } catch (err) {
