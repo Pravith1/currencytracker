@@ -43,7 +43,7 @@ router.post('/', async (req, res) => {
     const newTeam = new Team({
       members: teamMembers,
       membersKey,
-      score: 0
+      score: 40
     });
 
     await newTeam.save();
